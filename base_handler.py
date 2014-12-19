@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 
@@ -42,7 +43,11 @@ class JinjaHandler(webapp2.RequestHandler):
         return j
 
     def get_template_context(self, context=None):
-        return context
+        template_context = dict()
+        template_context['utcnow'] = datetime.datetime.utcnow()
+        if context:
+            template_context.update(context)
+        return template_context
 
     def render_template(self, filename, context={}):
         context = self.get_template_context(context)

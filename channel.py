@@ -1,3 +1,4 @@
+import datetime
 import logging
 import random
 import time
@@ -81,6 +82,64 @@ class ServerChannels(ndb.Model):
                         timezone = user.timezone
                         message['date'] = datetime_filter(log_line.timestamp, format='%b %d, %Y', timezone=timezone)
                         message['time'] = datetime_filter(log_line.timestamp, format='%I:%M%p', timezone=timezone)
+                        message_json = json.dumps(message)
+                        channel.send_message(client_id, message_json)
+                except:
+                    pass
+
+    @classmethod
+    def send_status(cls, server):
+        last_ping = datetime.datetime.utcnow()
+        message = {
+            'event': "SERVER_STATUS",
+            'date': datetime_filter(last_ping, format='%b %d, %Y') if last_ping else None,
+            'time': datetime_filter(last_ping, format='%I:%M%p') if last_ping else None,
+            'status': server.status,
+            'is_gce': server.is_gce,
+            'address': server.address,
+            'server_day': server.server_day,
+            'server_time': server.server_time,
+            'is_raining': server.is_raining,
+            'is_thundering': server.is_thundering,
+            'is_running': server.is_running,
+            'is_stopped': server.is_stopped,
+            'is_queued_start': server.is_queued_start,
+            'is_queued_restart': server.is_queued_restart,
+            'is_queued_stop': server.is_queued_stop,
+            'is_queued': server.is_queued,
+            'is_loading': server.is_loading,
+            'is_saving': server.is_saving,
+            'completed': server.completed,
+            'idle_shutdown_in': None,
+            'is_unknown': server.is_unknown,
+            'is_eula_agree': server.mc_properties.eula_agree
+        }
+        idle_shutdown_in = server.idle_shutdown_in
+        if idle_shutdown_in:
+            if idle_shutdown_in.total_seconds() > 60:
+                days = idle_shutdown_in.days
+                hours = idle_shutdown_in.seconds / 3600
+                mins = (idle_shutdown_in.seconds % 3600) / 60
+                shutdown_text = "Pausing in ~"
+                if days:
+                    shutdown_text += "{0}d".format(days)
+                if hours:
+                    shutdown_text += "{0}h".format(hours)
+                shutdown_text += "{0}m".format(mins)
+            else:
+                shutdown_text = "Pause imminent!"
+            message['idle_shutdown_in'] = shutdown_text
+        client_ids = cls.get_client_ids(server.key)
+        if client_ids:
+            for client_id in client_ids:
+                try:
+                    user = cls.get_user_key(client_id).get()
+                    if user is not None:
+                        if last_ping is not None:
+                            timezone = user.timezone
+                            message['date'] = datetime_filter(last_ping, format='%b %d, %Y', timezone=timezone)
+                            message['time'] = datetime_filter(last_ping, format='%I:%M:%S%p', timezone=timezone)
+                        message['admin'] = user.admin
                         message_json = json.dumps(message)
                         channel.send_message(client_id, message_json)
                 except:

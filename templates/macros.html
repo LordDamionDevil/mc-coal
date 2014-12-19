@@ -41,7 +41,7 @@
   </div>
 {% endmacro %}
 
-{% macro server_status(server, user, open_sessions=None) %}
+{% macro server_status(server, user, utcnow=None, open_sessions=None) %}
     {% set status = 'unknown' %}
     {% set status_text = 'Existential Crisis' %}
     {% if server.is_running %}
@@ -53,10 +53,20 @@
         {% set status_text = 'Defunct' %}
     {% endif %}
     {% set completed = None %}
+    {% set eula_agree = server.mc_properties.eula_agree %}
+    {% set eula_show = 'none' if eula_agree else 'initial' %}
+    {% set play_show = 'none' %}
+    {% set restart_show = 'none' %}
+    {% set save_show = 'none' %}
+    {% set pause_show = 'none' %}
+    {% set spinner_show = 'none' %}
     {% if server.is_gce %}
         {% if server.is_unknown or server.is_stopped %}
             {% set status = 'down' %}
             {% set status_text = 'Paused' %}
+            {% if eula_agree %}
+                {% set play_show = 'initial' %}
+            {% endif %}
         {% elif server.is_queued_start %}
             {% set status = 'queued' %}
             {% set status_text = 'Prologue...' %}
@@ -64,9 +74,18 @@
             {% if completed != None %}
                 {% set status_text = 'Remember...' %}
             {% endif %}
+            {% if eula_agree and user.admin %}
+                {% set pause_show = 'initial' %}
+            {% endif %}
+            {% set spinner_show = 'initial' %}
         {% elif server.is_queued_restart %}
             {% set status = 'queued' %}
             {% set status_text = 'Resolution...' %}
+            {% if eula_agree and user.admin %}
+                {% set save_show = 'initial' %}
+                {% set pause_show = 'initial' %}
+            {% endif %}
+            {% set spinner_show = 'initial' %}
         {% elif server.is_queued_stop %}
             {% set status = 'queued' %}
             {% set status_text = 'Epilogue...' %}
@@ -74,48 +93,76 @@
             {% if completed != None %}
                 {% set status_text = 'Memorize...' %}
             {% endif %}
-       {% endif %}
+            {% set spinner_show = 'initial' %}
+        {% elif eula_agree and user.admin %}
+                {% set restart_show = 'initial' %}
+                {% set save_show = 'initial' %}
+                {% set pause_show = 'initial' %}
+        {% endif %}
     {% endif %}
     {% set idle_shutdown_in = server.idle_shutdown_in %}
     <div class="title box wrap">
         <div class="left">
             <h1><a href="{{ uri_for('home', server_key=server.url_key) }}">{{ server.name }}</a></h1>
-            <h4>Day {{ server.server_day }} / Time {{ server.server_time }}
+            <h3>
+                <span class="server_address">
+                    {% if server.address %}
+                        <pre>{{ server.address }}</pre>
+                    {% elif server.is_unknown or server.is_stopped %}
+                        World Paused -- Press Play
+                    {% elif server.is_queued_start %}
+                        World Starting...
+                    {% elif server.is_queued_stop %}
+                        World Stopping...
+                    {% else %}
+                        World Paused
+                    {% endif %}
+                </span>
+            </h3>
+            <h3>Day <span class="server_day">{{ server.server_day }}</span> / Time <span class="server_time">{{ server.server_time }}</span>
+            / <span class="server_weather">
             {% if server.is_raining != None %}
                 {% if server.is_raining %}
-                    / Raining
+                    Raining
                     {% if server.is_thundering %}
-                        & Thundering
+                        &amp; Thundering
                     {% endif %}
                 {% else %}
-                    / Clear
+                    Clear
                 {% endif %}
             {% endif %}
-            </h4>
-            {% if server.address %}<h4>Address: {{ server.address }}</h4>{% endif %}
+            </span>
+            </h3>
             {% if user.admin %}
-                <h4>Admin Tools: &nbsp;
+                <h3>Admin Tools: &nbsp;
                 {% if server.is_gce %}
                     <a href="{{ uri_for('server_gce', key=server.key.urlsafe()) }}">Edit</a>
                      |
                     <a href="{{ uri_for('server_backup_download', key=server.key.urlsafe()) }}">Download</a>
                     {% if server.is_stopped or server.is_unknown %}
-                        |
-                        <a href="{{ uri_for('server_restore', key=server.key.urlsafe()) }}">Restore</a>
+                        <span class="server_restore">
+                    {% else %}
+                        <span class="server_restore" style="display:none">
                     {% endif %}
+                        | <a href="{{ uri_for('server_restore', key=server.key.urlsafe()) }}">Restore</a>
+                    </span>
                 {% else %}
                     <a href="{{ uri_for('server', key=server.key.urlsafe()) }}">Edit</a>
                 {% endif %}
                 {% if server.is_running %}
-                    <form action="{{ uri_for('server_command', key=server.key.urlsafe()) }}" method="post">
-                        <input type="text" name="command" placeholder="Send command..."/>
-                        <button type="submit" class="btn btn-primary">Send</button>
-                    </form>
+                    <span class="server_command">
+                {% else %}
+                    <span class="server_command" style="display:none">
                 {% endif %}
+                        <form action="{{ uri_for('server_command', key=server.key.urlsafe()) }}" method="post">
+                            <input type="text" name="command" placeholder="Send command..."/>
+                            <button type="submit" class="btn btn-primary">Send</button>
+                        </form>
+                    </span>
                 {% if not ON_SERVER %}
                     &nbsp; | &nbsp; <a href="{{ uri_for('server_upload_log', key=server.key.urlsafe()) }}">Upload Log File</a>
                 {% endif %}
-                </h4>
+                </h3>
             {% endif %}
             {% if open_sessions != None and server.is_running %}
                 <br/>
@@ -153,50 +200,55 @@
         <div class="status wrap {{ status }}">
             <i class="sprite"></i>
             <div class="right">
-                <h4>Server Status{% if server.last_ping %}&nbsp;({{ server.last_ping|datetimeformat(format='%b %d, %Y', timezone=user.timezone) }}&nbsp;&nbsp;{{ server.last_ping|datetimeformat(format='%I:%M%p', timezone=user.timezone) }}{% endif %})</h4>
+                <h4>Server Status&nbsp;<span class="server_last_ping">({{ utcnow|datetimeformat(format='%b %d, %Y', timezone=user.timezone) }}&nbsp;&nbsp;{{ utcnow|datetimeformat(format='%I:%M:%S%p', timezone=user.timezone) }})</span></h4>
                 {% if server.is_running and server.num_overloads %}<h4>5 Minute Lag Count:&nbsp;{{ server.num_overloads }}&nbsp;({{ server.ms_behind }}ms,&nbsp;{{ server.skipped_ticks }}&nbsp;ticks)</h4>{% endif %}
                 <strong>
-                    {{ status_text }}{% if completed != None %} {{ completed }}%{% endif %} (v{{ server.running_version }})
+                    <span class="server_status_text">{{ status_text }}</span>
+                    <span class="server_completed">{% if completed != None %}{{ completed }}%{% endif %}</span>
+                    <span id="spinner" class="spinner" style="display:{{ spinner_show }};">
+                        <img id="img-spinner" src="/img/spinner.gif" alt="Working..."/>
+                    </span>
+                    <span class="server_shutdown_in">
                     {% if idle_shutdown_in %}
-                        <br/>
                         {% if idle_shutdown_in.total_seconds() > 60 %}
-                            Pausing in ~{{ time_elapse(idle_shutdown_in.days, idle_shutdown_in.seconds) }}.
+                            <br/>Pausing in ~{{ time_elapse(idle_shutdown_in.days, idle_shutdown_in.seconds) }}.
                         {% else %}
-                            Pause imminent!
+                            <br/>Pause imminent!
                         {% endif %}
                     {% endif %}
+                    </span>
                 </strong>
-                {% if server.is_gce %}
-                    {% if server.is_stopped or server.is_unknown %}
-                        {% if server.mc_properties.eula_agree %}
-                            <form action="{{ uri_for('server_start', key=server.key.urlsafe()) }}" method="post">
-                                <div class="form-actions">
-                                    <button type="submit" class="btn btn-primary">Play</button>
-                                </div>
-                            </form>
-                        {% else %}
-                            You must <a href="{{ uri_for('server_gce', key=server.key.urlsafe()) }}">agree</a> to the Mojang Minecraft EULA to Play
-                        {% endif %}
-                   {% elif user.admin %}
-                        {% if not server.is_queued %}
-                            <form action="{{ uri_for('server_restart', key=server.key.urlsafe()) }}">
-                                <div class="form-actions">
-                                    <button type="submit" class="btn btn-primary">Restart</button>
-                                </div>
-                            </form>
-                            <form action="{{ uri_for('server_backup', key=server.key.urlsafe()) }}">
-                                <div class="form-actions">
-                                    <button type="submit" class="btn btn-primary">Save</button>
-                                </div>
-                            </form>
-                        {% endif %}
-                        <form action="{{ uri_for('server_stop', key=server.key.urlsafe()) }}">
-                            <div class="form-actions">
-                                <button type="submit" class="btn btn-primary">Pause</button>
-                            </div>
-                        </form>
-                    {% endif %}
-                {% endif %}
+                <span class="server_eula" style="display:{{ eula_show }}">
+                    You must <a href="{{ uri_for('server_gce', key=server.key.urlsafe()) }}">agree</a> to the Mojang Minecraft EULA to Play
+                </span>
+                <span class="server_play" style="display:{{ play_show }}">
+                    <form action="{{ uri_for('server_start', key=server.key.urlsafe()) }}" method="post">
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Play</button>
+                        </div>
+                    </form>
+                </span>
+                <span class="server_restart" style="display:{{ restart_show }}">
+                    <form action="{{ uri_for('server_restart', key=server.key.urlsafe()) }}">
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Restart</button>
+                        </div>
+                    </form>
+                </span>
+                <span class="server_save" style="display:{{ save_show }}">
+                    <form action="{{ uri_for('server_backup', key=server.key.urlsafe()) }}">
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+                    </form>
+                </span>
+                <span class="server_pause" style="display:{{ pause_show }}">
+                    <form action="{{ uri_for('server_stop', key=server.key.urlsafe()) }}">
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Pause</button>
+                        </div>
+                    </form>
+                </span>
             </div>
         </div>
     </div>

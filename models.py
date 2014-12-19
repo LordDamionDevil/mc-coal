@@ -599,6 +599,7 @@ class Server(ndb.Model):
                         datetime_filter(self.last_ping, timezone=admin.timezone) if self.last_ping else 'NEVER'
                     )
                     User.send_admin_email(subject, body, admin=admin)
+        ServerChannels.send_status(self)
 
     def deactivate(self):
         if self.is_running:

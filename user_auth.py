@@ -135,7 +135,7 @@ class UserHandler(JinjaHandler, UserBase):
             self.session_store.save_sessions(self.response)
 
     def get_template_context(self, context=None):
-        template_context = dict()
+        template_context = super(UserHandler, self).get_template_context(context=context)
         if context:
             template_context.update(context)
         template_context['flashes'] = self.session.get_flashes()

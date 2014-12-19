@@ -520,8 +520,6 @@ class ServerStartHandler(AdminHandlerBase):
             server.start()
             message = u'World "{0}" starting...'.format(server.name)
             logging.info(message)
-            self.session.add_flash(message, level='info')
-            time.sleep(1)
         except Exception, e:
             logging.error(u"Error starting server: {0}".format(e))
         self.redirect(webapp2.uri_for('home', server_key=server.url_key))
@@ -557,10 +555,9 @@ class ServerBackupHandler(AdminHandlerBase):
             return
         try:
             server.backup()
-            message = u'"{0}" game saving...'.format(server.name)
+            message = u'"{0}" game queued to save.'.format(server.name)
             logging.info(message)
             self.session.add_flash(message, level='info')
-            time.sleep(1)
         except webapp2.HTTPException:
             pass
         except Exception, e:
@@ -664,7 +661,6 @@ class ServerRestoreHandler(AdminHandlerBase):
                     message = u"Saved game {0} restored.".format(name)
                 logging.info(message)
                 self.session.add_flash(message, level='info')
-                time.sleep(1)
                 self.redirect(webapp2.uri_for('home', server_key=server.url_key))
         except Exception, e:
             message = "Problem restoring game: {0}".format(e)
@@ -710,8 +706,6 @@ class ServerRestartHandler(AdminHandlerBase):
             server.restart()
             message = u'World "{0}" restarting...'.format(server.name)
             logging.info(message)
-            self.session.add_flash(message, level='info')
-            time.sleep(1)
         except webapp2.HTTPException:
             pass
         except Exception, e:
@@ -753,8 +747,6 @@ class ServerStopHandler(AdminHandlerBase):
             server.stop()
             message = u'World "{0}" pausing...'.format(server.name)
             logging.info(message)
-            self.session.add_flash(message, level='info')
-            time.sleep(1)
         except webapp2.HTTPException:
             pass
         except Exception, e:
@@ -789,8 +781,6 @@ class ServerCommandHandler(AdminHandlerBase):
                     Command.push(server.key, username, command)
                     message = u'Command "{0}" sent to world "{1}".'.format(command, server.name)
                     logging.info(message)
-                    self.session.add_flash(message, level='info')
-                    time.sleep(1)
         except Exception, e:
             message = u'Command "{0}" could not be send to world "{1}" (Reason: {2}).'.format(command, server.name, e)
             logging.error(message)

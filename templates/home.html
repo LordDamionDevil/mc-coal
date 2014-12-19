@@ -2,11 +2,19 @@
 {% import 'macros.html' as macros %}
 
 {% block title %}Home{% endblock %}
+{% block head %}
+    {{ super() }}
+    <meta name="channel-token" content="{{ channel_token }}">
+    <meta name="username" content="{{ username }}">
+{% endblock %}
 {% block page_name %}Home{% endblock %}
 
 {% block content %}
+    <h3 class="box live_updates_status">
+        Live updates have been <strong>disconnected</strong>!<br><a href="{{ uri_for('home', server_key=server.url_key) }}">Reload</a> to reconnect.
+    </h3>
 
-    {{ macros.server_status(server, user) }}
+    {{ macros.server_status(server, user, utcnow=utcnow) }}
 
     <div class="wrap">
     <div class="player_list left">
@@ -67,4 +75,23 @@
     </div>
     </div>
     <br/>
+{% endblock %}
+{% block js %}
+    <script type="text/javascript" src="/_ah/channel/jsapi"></script>
+    <script type="text/javascript" src="/js/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/js/buzz.js"></script>
+    <script type="text/javascript" src="/js/chats.js"></script>
+    <input type="hidden" id="refreshed" value="no">
+    <script type="text/javascript">
+        onload=function(){
+            var e=document.getElementById("refreshed");
+            if (e.value=="no") {
+                e.value="yes";
+            }
+            else {
+                e.value="no";
+                location.reload();
+            }
+        }
+    </script>
 {% endblock %}

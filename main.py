@@ -99,11 +99,15 @@ class HomeHandler(MainHandlerBase):
         new_chats, chats_cursor, more = new_chats_query.fetch_page(20)
         if new_chats:
             self.request.user.record_chat_view(new_chats[0].timestamp)
+        user = self.request.user
+        channel_token = ServerChannels.create_channel(server.key, user)
         # Render with context
         context = {
             'open_sessions': server.open_sessions,
             'new_chats': new_chats,
-            'chats_cursor': chats_cursor
+            'chats_cursor': chats_cursor,
+            'channel_token': channel_token,
+            'username': user.get_server_play_name(server.key),
         }
         self.render_template('home.html', context=context)
 
