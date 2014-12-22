@@ -112,7 +112,8 @@ class ServerChannels(ndb.Model):
             'completed': server.completed,
             'idle_shutdown_in': None,
             'is_unknown': server.is_unknown,
-            'is_eula_agree': server.mc_properties.eula_agree
+            'is_eula_agree': server.mc_properties.eula_agree,
+            'num_overloads': server.num_overloads
         }
         idle_shutdown_in = server.idle_shutdown_in
         if idle_shutdown_in:

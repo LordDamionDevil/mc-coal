@@ -52,6 +52,10 @@
         {% set status = 'down' %}
         {% set status_text = 'Defunct' %}
     {% endif %}
+    {% set overload_show = 'none' %}
+    {% if server.is_running and server.num_overloads %}
+        {% set overload_show = 'initial' %}
+    {% endif %}
     {% set completed = None %}
     {% set eula_agree = server.mc_properties.eula_agree %}
     {% set eula_show = 'none' if eula_agree else 'initial' %}
@@ -201,7 +205,7 @@
             <i class="sprite"></i>
             <div class="right">
                 <h4>Server Status&nbsp;<span class="server_last_ping">({{ utcnow|datetimeformat(format='%b %d, %Y', timezone=user.timezone) }}&nbsp;&nbsp;{{ utcnow|datetimeformat(format='%I:%M:%S%p', timezone=user.timezone) }})</span></h4>
-                {% if server.is_running and server.num_overloads %}<h4>5 Minute Lag Count:&nbsp;{{ server.num_overloads }}&nbsp;({{ server.ms_behind }}ms,&nbsp;{{ server.skipped_ticks }}&nbsp;ticks)</h4>{% endif %}
+                <h4><span class="server_num_overloads" style="display:{{ overload_show }}">5 Minute Lag Count:&nbsp;{{ server.num_overloads }}</span></h4>
                 <strong>
                     <span class="server_status_text">{{ status_text }}</span>
                     <span class="server_completed">{% if completed != None %}{{ completed }}%{% endif %}</span>

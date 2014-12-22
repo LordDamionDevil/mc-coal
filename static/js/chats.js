@@ -70,11 +70,13 @@ var chats = {
     socketServerMessage: function(data) {
         chats.setServerTimeWeather(data);
         chats.setServerStatusTime(data);
+        chats.setServerOverloads(data);
         chats.setServerAddress(data);
         chats.setServerCommand(data);
         chats.setServerRestore(data);
         chats.setServerStatus(data);
         chats.showServerButtons(data);
+        chats.setChatPlaceholder(data);
     },
 
     setServerTimeWeather: function(data) {
@@ -98,6 +100,18 @@ var chats = {
     setServerStatusTime: function(data) {
         if ($('.server_last_ping').length && data.date) {
             $('.server_last_ping').html("(" + data.date + "&nbsp;&nbsp;" + data.time + ")");
+        }
+    },
+
+    setServerOverloads: function(data) {
+        if ($('.server_num_overloads').length) {
+            if (data.is_running && data.num_overloads) {
+                $('.server_num_overloads').html("5 Minute Lag Count:&nbsp;" + data.num_overloads);
+                $('.server_num_overloads').show()
+            }
+            else {
+                $('.server_num_overloads').hide()
+            };
         }
     },
 
@@ -269,6 +283,17 @@ var chats = {
             $('.server_save').hide();
             $('.server_pause').hide();
         };
+    },
+
+    setChatPlaceholder: function(data) {
+        if ($("input[name='chat']").length) {
+            if (data.is_running) {
+                $("input[name='chat']").attr("placeholder", "Say something...");
+            }
+            else {
+                $("input[name='chat']").attr("placeholder", "Say something... The server is not running but chats will be saved.");
+            };
+        }
     },
 
     socketError: function(error) {},

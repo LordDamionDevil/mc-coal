@@ -28,7 +28,7 @@ from user_auth import UserBase, authentication_required, authenticate, mojang_au
 
 
 ON_SERVER = not os.environ.get('SERVER_SOFTWARE', 'Development').startswith('Development')
-RESULTS_PER_PAGE = 50
+RESULTS_PER_PAGE = 30
 TIMEZONE_CHOICES = [(tz, tz) for tz in pytz.common_timezones if tz.startswith('U')] + \
     [(tz, tz) for tz in pytz.common_timezones if not tz.startswith('U')]
 
@@ -84,32 +84,87 @@ class MainHandler(MainHandlerBase):
             self.redirect(webapp2.uri_for('main'))
 
 
-class HomeHandler(MainHandlerBase):
+class HomeHandler(MainPagingHandler):
     @authentication_required(authenticate=authenticate)
     def get(self, server_key=None):
         server = self.get_server_by_key(server_key, abort=False)
         if server is None:
             self.redirect_to_server('home')
             return
-        # Get new chats
-        new_chats_query = LogLine.query_latest_events(server.key)
-        last_chat_view = self.request.user.last_chat_view
-        if last_chat_view is not None:
-            new_chats_query = new_chats_query.filter(LogLine.timestamp > last_chat_view)
-        new_chats, chats_cursor, more = new_chats_query.fetch_page(20)
-        if new_chats:
-            self.request.user.record_chat_view(new_chats[0].timestamp)
+        query_string = self.request.get('q', None)
+        # Search
+        if query_string:
+            page = 0
+            cursor = self.request.get('cursor', None)
+            if cursor and cursor.startswith('PAGE_'):
+                page = int(cursor.strip()[5:])
+            offset = page*RESULTS_PER_PAGE
+            results, number_found, _ = search.search_log_lines(
+                'chat:{0}'.format(query_string),
+                server_key=server.key,
+                limit=RESULTS_PER_PAGE,
+                offset=offset
+            )
+            previous_cursor = next_cursor = None
+            if page > 0:
+                previous_cursor = u'PAGE_{0}&q={1}'.format(page - 1 if page > 0 else 0, query_string)
+            if number_found > offset + RESULTS_PER_PAGE:
+                next_cursor = u'PAGE_{0}&q={1}'.format(page + 1, query_string)
+        # Latest
+        else:
+            results, previous_cursor, next_cursor = self.get_results_with_cursors(
+                LogLine.query_latest_events(server.key), LogLine.query_oldest_events(server.key), RESULTS_PER_PAGE
+            )
+        context = {'chats': results, 'query_string': query_string or ''}
+        if self.request.is_xhr:
+            self.render_xhr_response(server.key, context, next_cursor)
+        else:
+            self.render_html_response(server, context, next_cursor, previous_cursor)
+
+    def render_xhr_response(self, server_key, context, next_cursor):
+        if next_cursor:
+            context.update({
+                'next_uri': uri_for_pagination('home', server_key=server_key.urlsafe(), cursor=next_cursor)
+            })
+        self.response.headers['Content-Type'] = 'text/javascript'
+        self.render_template('chats.js', context=context)
+
+    def render_html_response(self, server, context, next_cursor, previous_cursor):
         user = self.request.user
         channel_token = ServerChannels.create_channel(server.key, user)
-        # Render with context
-        context = {
+        context.update({
             'open_sessions': server.open_sessions,
-            'new_chats': new_chats,
-            'chats_cursor': chats_cursor,
+            'next_cursor': next_cursor,
+            'previous_cursor': previous_cursor,
             'channel_token': channel_token,
             'username': user.get_server_play_name(server.key),
-        }
+        })
         self.render_template('home.html', context=context)
+
+    @authentication_required(authenticate=authenticate)
+    def post(self, server_key=None):
+        server = self.get_server_by_key(server_key, abort=False)
+        if server is None:
+            self.redirect_to_server('home')
+            return
+        try:
+            user = self.request.user
+            if not (user and user.active):
+                self.abort(404)
+            form = ChatForm(self.request.POST)
+            if form.validate():
+                chat = form.chat.data
+                username = user.get_server_play_name(server.key)
+                if chat:
+                    if username:
+                        chat = u"/say <{0}> {1}".format(username, chat)
+                    else:
+                        chat = u"/say {0}".format(chat)
+                    Command.push(server.key, username, chat)
+        except Exception, e:
+            logging.error(u"Error POSTing chat: {0}".format(e))
+            self.abort(500)
+        self.response.set_status(201)
 
 
 class ChatForm(form.Form):
