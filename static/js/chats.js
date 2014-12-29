@@ -41,7 +41,12 @@ var chats = {
                 .addClass(data.username == chats.username ? 'you' : '');
 
             eventDiv.find('.avatar').css('background-image', 'url(https://minotar.net/helm/' + data.username + '/20)');
-            eventDiv.find('.name').text(data.username);
+            if (data.username) {
+                eventDiv.find('.name').text(data.username);
+            }
+            else {
+                eventDiv.find('.name').html('&lt;World&gt;');
+            };
             eventDiv.find('.online .data').html(data.date + '&nbsp;&nbsp;' + data.time);
 
             var chatDiv = eventDiv.find('.chat');

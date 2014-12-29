@@ -1,7 +1,7 @@
 {% for chat in chats %}
     <div class="player wrap{% if chat.is_user(user) %} you{% endif %}{% if 'death' in chat.tags %} death_event{% endif %}{% if 'login' in chat.tags %} login_event{% endif %}{% if 'logout' in chat.tags %} logout_event{% endif %}{% if 'achievement' in chat.tags %} achievement_event{% endif %}">
         <div class="avatar" style="background-image: url(https://minotar.net/helm/{{chat.username}}/20)"></div>
-        <div class="name">{{ chat.username }}</div>
+        <div class="name">{{ chat.username or "&lt;World&gt;"}}</div>
 
         <div class="chat">
             {% if 'death' in chat.tags %}{{ chat.death_message }}{% elif 'achievement' in chat.tags %}{{ chat.achievement_message }}{% elif 'login' in chat.tags %}Logged In{% elif 'logout' in chat.tags %}Logged Out{% else %}{{ chat.chat }}{% endif %}
