@@ -41,7 +41,7 @@
   </div>
 {% endmacro %}
 
-{% macro server_status(server, user, utcnow=None, open_sessions=None) %}
+{% macro server_status(server, user, utcnow=None) %}
     {% set status = 'unknown' %}
     {% set status_text = 'Existential Crisis' %}
     {% if server.is_running %}
@@ -167,38 +167,6 @@
                     &nbsp; | &nbsp; <a href="{{ uri_for('server_upload_log', key=server.key.urlsafe()) }}">Upload Log File</a>
                 {% endif %}
                 </h3>
-            {% endif %}
-            {% if open_sessions != None and server.is_running %}
-                <br/>
-                <div class="player_list left wrap">
-                    <h3 class="box">Currently Playing</h3>
-                    <div class="box">
-                        {% if open_sessions %}
-                            {% for open_session in open_sessions %}
-                                <div class="player wrap">
-                                    <div class="activity on"></div>
-                                    <div class="avatar" style="background-image: url(https://minotar.net/helm/{{open_session.username}}/40)"></div>
-                                    <div class="name">{{ open_session.username }}</div>
-                                    <div class="online">
-                                        {% if open_session.duration %}
-                                            {{ time_elapse(open_session.duration.days, open_session.duration.seconds) }}
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            <h3>Idle</h3>
-                            {% if idle_shutdown_in %}
-                                {% if idle_shutdown_in.total_seconds() > 60 %}
-                                    <h3>Pausing in ~{{ time_elapse(idle_shutdown_in.days, idle_shutdown_in.seconds) }}</h3>
-                                {% else %}
-                                    <h3>Pause imminent!</h3>
-                                {% endif %}
-                            {% endif %}
-                            </h3>
-                        {% endif %}
-                    </div>
-                </div>
             {% endif %}
         </div>
         <div class="status wrap {{ status }}">

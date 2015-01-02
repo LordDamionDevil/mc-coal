@@ -2,11 +2,38 @@
 {% import 'macros.html' as macros %}
 
 {% block title %}Main{% endblock %}
+{% block head %}
+    {{ super() }}
+    <meta name="channel-token" content="{{ channel_token }}">
+    <meta name="username" content="{{ username }}">
+{% endblock %}
 {% block page_name %}Main{% endblock %}
 
 {% block content %}
     {% for server in servers %}
-        {{ macros.server_status(server, user, open_sessions=server.open_sessions) }}
+        <span id="{{ server.key.id() }}">
+            {{ macros.server_status(server, user, utcnow=utcnow) }}
+        </span>
         <br/>
     {% endfor %}
+{% endblock %}
+
+{% block js %}
+    <script type="text/javascript" src="/_ah/channel/jsapi"></script>
+    <script type="text/javascript" src="/js/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/js/buzz.js"></script>
+    <script type="text/javascript" src="/js/channel.js"></script>
+    <input type="hidden" id="refreshed" value="no">
+    <script type="text/javascript">
+        onload=function(){
+            var e=document.getElementById("refreshed");
+            if (e.value=="no") {
+                e.value="yes";
+            }
+            else {
+                e.value="no";
+                location.reload();
+            }
+        }
+    </script>
 {% endblock %}

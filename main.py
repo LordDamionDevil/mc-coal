@@ -55,8 +55,10 @@ class MainHandler(MainHandlerBase):
                 if servers and len(servers) == 1:
                     self.redirect(webapp2.uri_for('home', server_key=servers[0].url_key))
                     return
+                channel_token = ServerChannels.create_channel([server.key for server in servers], user)
                 context = {
-                    'servers': servers
+                    'servers': servers,
+                    'channel_token': channel_token
                 }
                 self.render_template('main.html', context=context)
             else:
@@ -131,7 +133,7 @@ class HomeHandler(MainPagingHandler):
 
     def render_html_response(self, server, context, next_cursor, previous_cursor):
         user = self.request.user
-        channel_token = ServerChannels.create_channel(server.key, user)
+        channel_token = ServerChannels.create_channel([server.key], user)
         context.update({
             'open_sessions': server.open_sessions,
             'next_cursor': next_cursor,

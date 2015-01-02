@@ -1,21 +1,26 @@
-var chats = {
+var channel = {
     username: null,
     soundEnabled: true,
 
     init: function() {
-        chats.username = $('meta[name="username"]').attr('content');
-        chats.initChannel();
-        chats.initSound();
+        channel.username = $('meta[name="username"]').attr('content');
+        channel.initChannels();
+        channel.initSound();
     },
 
-    initChannel: function() {
-        var token = $('meta[name="channel-token"]').attr('content');
-        var channel = new goog.appengine.Channel(token);
-        var socket = channel.open();
-        socket.onopen = chats.socketOpened;
-        socket.onmessage = chats.socketMessage;
-        socket.onerror = chats.socketError;
-        socket.onclose = chats.socketClosed;
+    initChannel: function(token) {
+        var new_channel = new goog.appengine.Channel(token);
+        var socket = new_channel.open();
+        socket.onopen = channel.socketOpened;
+        socket.onmessage = channel.socketMessage;
+        socket.onerror = channel.socketError;
+        socket.onclose = channel.socketClosed;
+    },
+
+    initChannels: function() {
+        $('meta[name="channel-token"]').each(function(index) {
+            channel.initChannel($(this).attr('content'));
+        });
     },
 
     socketOpened: function() {},
@@ -23,22 +28,22 @@ var chats = {
     socketMessage: function(message) {
         var data = jQuery.parseJSON(message.data);
         if (data.event == "SERVER_STATUS") {
-            chats.socketServerMessage(data);
+            channel.socketServerMessage(data);
         }
         else {
-            chats.socketChatMessage(data);
+            channel.socketChatMessage(data);
         }
     },
 
     socketChatMessage: function(data) {
         if ($('.event_template').length) {
-            chats.playSound(data.event);
+            channel.playSound(data.event);
 
             var eventDiv = $('.event_template')
                 .first()
                 .clone()
                 .addClass(data.event + '_event')
-                .addClass(data.username == chats.username ? 'you' : '');
+                .addClass(data.username == channel.username ? 'you' : '');
 
             if (data.username) {
                 eventDiv.find('.avatar').css('background-image', 'url(https://minotar.net/helm/' + data.username + '/20)');
@@ -74,109 +79,117 @@ var chats = {
     },
 
     socketServerMessage: function(data) {
-        chats.setServerTimeWeather(data);
-        chats.setServerStatusTime(data);
-        chats.setServerOverloads(data);
-        chats.setServerAddress(data);
-        chats.setServerCommand(data);
-        chats.setServerRestore(data);
-        chats.setServerStatus(data);
-        chats.showServerButtons(data);
-        chats.setChatPlaceholder(data);
+        channel.setServerTimeWeather(data);
+        channel.setServerStatusTime(data);
+        channel.setServerOverloads(data);
+        channel.setServerAddress(data);
+        channel.setServerCommand(data);
+        channel.setServerRestore(data);
+        channel.setServerStatus(data);
+        channel.showServerButtons(data);
+        channel.setChatPlaceholder(data);
     },
 
     setServerTimeWeather: function(data) {
-        if ($('.server_day').length) {
-            $('.server_day').text(data.server_day);
-            $('.server_time').text(data.server_time);
+        day_element_id = "#" + data.server_id + " .server_day";
+        time_element_id = "#" + data.server_id + " .server_time";
+        weather_element_id = "#" + data.server_id + " .server_weather";
+        if ($(day_element_id).length) {
+            $(day_element_id).text(data.server_day);
+            $(time_element_id).text(data.server_time);
             if (data.is_raining) {
                 if (data.is_thundering) {
-                    $('.server_weather').text("Raining & Thundering");
+                    $(weather_element_id).text("Raining & Thundering");
                 }
                 else {
-                    $('.server_weather').text("Raining");
+                    $(weather_element_id).text("Raining");
                 };
             }
             else {
-                $('.server_weather').text("Clear");
+                $(weather_element_id).text("Clear");
             };
         }
     },
 
     setServerStatusTime: function(data) {
-        if ($('.server_last_ping').length && data.date) {
-            $('.server_last_ping').html("(" + data.date + "&nbsp;&nbsp;" + data.time + ")");
+        element_id = "#" + data.server_id + " .server_last_ping";
+        if ($(element_id).length && data.date) {
+            $(element_id).html("(" + data.date + "&nbsp;&nbsp;" + data.time + ")");
         }
     },
 
     setServerOverloads: function(data) {
-        if ($('.server_num_overloads').length) {
+        element_id = "#" + data.server_id + " .server_num_overloads";
+        if ($(element_id).length) {
             if (data.is_running && data.num_overloads) {
-                $('.server_num_overloads').html("5 Minute Lag Count:&nbsp;" + data.num_overloads);
-                $('.server_num_overloads').show()
+                $(element_id).html("5 Minute Lag Count:&nbsp;" + data.num_overloads).show();
             }
             else {
-                $('.server_num_overloads').hide()
+                $(element_id).hide()
             };
         }
     },
 
     setServerAddress: function(data) {
-        if ($('.server_address').length) {
+        element_id = "#" + data.server_id + " .server_address";
+        if ($(element_id).length) {
             if (data.address) {
-                $('.server_address').html("<pre>"+data.address+"</pre>");
+                $(element_id).html("<pre>"+data.address+"</pre>");
             }
             else if (data.is_stopped || data.is_unknown) {
-                $('.server_address').text("World Paused -- Press Play");
+                $(element_id).text("World Paused -- Press Play");
             }
             else if (data.is_queued_start) {
-                $('.server_address').text("World Starting...");
+                $(element_id).text("World Starting...");
             }
             else if (data.is_queued_stop) {
-                $('.server_address').text("World Stopping...");
+                $(element_id).text("World Stopping...");
             }
             else {
-                $('.server_address').text("World Paused");
+                $(element_id).text("World Paused");
             };
         }
     },
 
     setServerCommand: function(data) {
-        if ($('.server_command').length) {
+        element_id = "#" + data.server_id + " .server_command";
+        if ($(element_id).length) {
             if (data.is_running) {
-                $('.server_command').show();
+                $(element_id).show();
             }
             else {
-                $('.server_command').hide();
+                $(element_id).hide();
             };
         }
     },
 
     setServerRestore: function(data) {
-        if ($('.server_restore').length) {
+        element_id = "#" + data.server_id + " .server_restore";
+        if ($(element_id).length) {
             if (data.is_gce) {
                 if (data.is_stopped || data.is_unknown) {
-                    $('.server_restore').show();
+                    $(element_id).show();
                 }
                 else {
-                    $('.server_restore').hide();
+                    $(element_id).hide();
                 };
             }
         }
     },
 
     setServerStatus: function(data) {
+        spinner_element_id = "#" + data.server_id + " .spinner";
         status = "unknown";
         status_text = "Existential Crisis";
         if (data.is_running) {
             status = "up";
             status_text = "Playing";
-            $('.spinner').hide();
+            $(spinner_element_id).hide();
         }
         if (data.is_stopped) {
             status = "down";
             status_text = "Defunct";
-            $('.spinner').hide();
+            $(spinner_element_id).hide();
         }
         completed = null;
         if (data.is_gce) {
@@ -184,7 +197,7 @@ var chats = {
             if (data.is_stopped || data.is_unknown) {
                 status = "down";
                 status_text = "Paused";
-                $('.spinner').hide();
+                $(spinner_element_id).hide();
             }
             else if (data.is_queued_start) {
                 status = "queued";
@@ -192,12 +205,12 @@ var chats = {
                 if (completed != null) {
                     status_text = "Remember...";
                 }
-                $('.spinner').show();
+                $(spinner_element_id).show();
             }
             else if (data.is_queued_restart) {
                 status = "queued";
                 status_text = "Resolution...";
-                $('.spinner').show();
+                $(spinner_element_id).show();
             }
             else if (data.is_queued_stop) {
                 status = "queued";
@@ -205,89 +218,96 @@ var chats = {
                 if (completed != null) {
                     status_text = "Memorize...";
                 }
-                $('.spinner').show();
+                $(spinner_element_id).show();
             };
         }
-        if ($('.status').length) {
-            $('.status').removeClass("up down queued unknown");
-            $('.status').addClass(status);
+        status_element_id = "#" + data.server_id + " .status";
+        if ($(status_element_id).length) {
+            $(status_element_id).removeClass("up down queued unknown").addClass(status);
         }
-        if ($('.server_status_text').length) {
-            $('.server_status_text').text(status_text)
+        status_text_element_id = "#" + data.server_id + " .server_status_text";
+        if ($(status_text_element_id).length) {
+            $(status_text_element_id).text(status_text)
         }
-        if ($('.server_completed').length) {
+        completed_element_id = "#" + data.server_id + " .server_completed";
+        if ($(completed_element_id).length) {
             if (completed != null) {
-                $('.server_completed').text(completed + "%");
+                $(completed_element_id).text(completed + "%");
             }
             else {
-                $('.server_completed').text("");
+                $(completed_element_id).text("");
             };
         }
-        if ($('.server_shutdown_in').length) {
+        shutdown_element_id = "#" + data.server_id + " .server_shutdown_in";
+        if ($(shutdown_element_id).length) {
             if (data.idle_shutdown_in != null) {
-                $('.server_shutdown_in').html("<br/>" + data.idle_shutdown_in);
-                $('.server_shutdown_in').show();
+                $(shutdown_element_id).html("<br/>" + data.idle_shutdown_in).show();
             }
             else {
-                $('.server_shutdown_in').hide();
+                $(shutdown_element_id).hide();
             };
         }
     },
 
     showServerButtons: function(data) {
-        if ($('.server_eula').length && data.is_gce) {
+        eula_element_id = "#" + data.server_id + " .server_eula";
+        play_element_id = "#" + data.server_id + " .server_play";
+        restart_element_id = "#" + data.server_id + " .server_restart";
+        save_element_id = "#" + data.server_id + " .server_save";
+        pause_element_id = "#" + data.server_id + " .server_pause";
+        if ($(eula_element_id).length && data.is_gce) {
             if (data.is_eula_agree) {
-                $('.server_eula').hide();
+                $(eula_element_id).hide();
                 if (data.is_stopped || data.is_unknown) {
-                    $('.server_play').show();
-                    $('.server_restart').hide();
-                    $('.server_save').hide();
-                    $('.server_pause').hide();
+                    $(play_element_id).show();
+                    $(restart_element_id).hide();
+                    $(save_element_id).hide();
+                    $(pause_element_id).hide();
                 }
                 else if (data.admin) {
-                    $('.server_play').hide();
+                    $(play_element_id).hide();
                     if (data.is_queued_start) {
-                        $('.server_restart').hide();
-                        $('.server_save').hide();
-                        $('.server_pause').show();
+                        $(restart_element_id).hide();
+                        $(save_element_id).hide();
+                        $(pause_element_id).show();
                     }
                     else if (data.is_queued_restart) {
-                        $('.server_restart').hide();
-                        $('.server_save').show();
-                        $('.server_pause').show();
+                        $(restart_element_id).hide();
+                        $(save_element_id).show();
+                        $(pause_element_id).show();
                     }
                     else if (data.is_queued_stop) {
-                        $('.server_restart').hide();
-                        $('.server_save').hide();
-                        $('.server_pause').hide();
+                        $(restart_element_id).hide();
+                        $(save_element_id).hide();
+                        $(pause_element_id).hide();
                     }
                     else {
-                        $('.server_restart').show();
-                        $('.server_save').show();
-                        $('.server_pause').show();
+                        $(restart_element_id).show();
+                        $(save_element_id).show();
+                        $(pause_element_id).show();
                     }
                 }
                 else {
-                    $('.server_play').hide();
-                    $('.server_restart').hide();
-                    $('.server_save').hide();
-                    $('.server_pause').hide();
+                    $(play_element_id).hide();
+                    $(restart_element_id).hide();
+                    $(save_element_id).hide();
+                    $(pause_element_id).hide();
                 }
             }
             else {
-                $('.server_eula').show();
-                $('.server_play').hide();
-                $('.server_restart').hide();
-                $('.server_save').hide();
-                $('.server_pause').hide();
+                $(eula_element_id).show();
+                $(play_element_id).hide();
+                $(restart_element_id).hide();
+                $(save_element_id).hide();
+                $(pause_element_id).hide();
             }
         }
         else {
-            $('.server_eula').hide();
-            $('.server_play').hide();
-            $('.server_restart').hide();
-            $('.server_save').hide();
-            $('.server_pause').hide();
+            $(eula_element_id).hide();
+            $(play_element_id).hide();
+            $(restart_element_id).hide();
+            $(save_element_id).hide();
+            $(pause_element_id).hide();
         };
     },
 
@@ -305,16 +325,16 @@ var chats = {
     socketError: function(error) {},
 
     socketClosed: function() {
-        chats.playSound('brokenSocket');
+        channel.playSound('brokenSocket');
         $('.live_updates_status').show();
     },
 
     initSound: function() {
         if ($.cookie('sound') == 'off') {
-            chats.soundEnabled = false;
+            channel.soundEnabled = false;
         }
-        $('.sound_state').click(chats.toggleSoundState);
-        chats.showSoundState();
+        $('.sound_state').click(channel.toggleSoundState);
+        channel.showSoundState();
     },
 
     sounds: {
@@ -328,23 +348,23 @@ var chats = {
     },
 
     playSound: function(eventType) {
-        if (chats.soundEnabled) {
-            chats.sounds[eventType].play();
+        if (channel.soundEnabled) {
+            channel.sounds[eventType].play();
         }
     },
 
     toggleSoundState: function() {
-        chats.soundEnabled = !chats.soundEnabled;
-        if (chats.soundEnabled) {
-            chats.playSound('soundOn');
+        channel.soundEnabled = !channel.soundEnabled;
+        if (channel.soundEnabled) {
+            channel.playSound('soundOn');
         }
-        $.cookie('sound', chats.soundEnabled ? 'on' : 'off', { expires: 3650, path: '/' });
-        chats.showSoundState();
+        $.cookie('sound', channel.soundEnabled ? 'on' : 'off', { expires: 3650, path: '/' });
+        channel.showSoundState();
     },
 
     showSoundState: function() {
         $('.sound_state').text(
-            chats.soundEnabled ? 'ON' : 'OFF'
+            channel.soundEnabled ? 'ON' : 'OFF'
         );
     }
 };
@@ -398,7 +418,7 @@ function submitForm(form) {
 }
 
 $(function() {
-    chats.init();
+    channel.init();
     scroller.init();
     enableFormSubmission($('#chatform'));
 });

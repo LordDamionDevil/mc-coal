@@ -18,7 +18,7 @@
         <div class="data"></div>
     </div>
 </div>
-
+<span id="{{ server.key.id() }}">
     <h3 class="box live_updates_status">
         Live updates have been <strong>disconnected</strong>!<br><a href="{{ uri_for('home', server_key=server.url_key) }}">Reload</a> to reconnect.
     </h3>
@@ -79,15 +79,14 @@
         {{ macros.infinite_scroll_uri('home', server_key=server.url_key, next_cursor=next_cursor) }}
     </div>
     </div>
-
-
+</span>
 {% endblock %}
 
 {% block js %}
     <script type="text/javascript" src="/_ah/channel/jsapi"></script>
     <script type="text/javascript" src="/js/jquery.cookie.js"></script>
     <script type="text/javascript" src="/js/buzz.js"></script>
-    <script type="text/javascript" src="/js/chats.js"></script>
+    <script type="text/javascript" src="/js/channel.js"></script>
     <input type="hidden" id="refreshed" value="no">
     <script type="text/javascript">
         onload=function(){
