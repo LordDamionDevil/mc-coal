@@ -123,7 +123,7 @@
                     {% endif %}
                 </span>
             </h3>
-            <h3>Day <span class="server_day">{{ server.server_day }}</span> / Time <span class="server_time">{{ server.server_time }}</span>
+            <h3>Day <span class="server_day">{{ server.server_day or "0"}}</span> / Time <span class="server_time">{{ server.server_time or "0" }}</span>
             / <span class="server_weather">
             {% if server.is_raining != None %}
                 {% if server.is_raining %}
@@ -134,6 +134,8 @@
                 {% else %}
                     Clear
                 {% endif %}
+            {% else %}
+                Not Played
             {% endif %}
             </span>
             </h3>

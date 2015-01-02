@@ -10,12 +10,17 @@
 {% block page_name %}Main{% endblock %}
 
 {% block content %}
+    <h3 class="box live_updates_status">
+        Live updates have been <strong>disconnected</strong>!<br><a href="{{ uri_for('main') }}">Reload</a> to reconnect.
+    </h3>
     {% for server in servers %}
         <span id="{{ server.key.id() }}">
             {{ macros.server_status(server, user, utcnow=utcnow) }}
         </span>
         <br/>
     {% endfor %}
+
+    {{ macros.previous_next_uri('main', server_key=None, next_cursor=next_cursor, previous_cursor=previous_cursor) }}
 {% endblock %}
 
 {% block js %}

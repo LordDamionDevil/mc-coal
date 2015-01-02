@@ -45,20 +45,29 @@ class UserEmailForm(form.Form):
     email = fields.StringField(u'Contact Email', validators=[validators.Email(message=u'Invalid email address.')])
 
 
-class MainHandler(MainHandlerBase):
+class MainHandler(MainPagingHandler):
     def get(self):
         context = {'title': main_config.TITLE, 'description': main_config.DESCRIPTION}
         user = self.user
         if user:
             if user.active:
-                servers = Server.query_all().fetch(100)
-                if servers and len(servers) == 1:
-                    self.redirect(webapp2.uri_for('home', server_key=servers[0].url_key))
-                    return
-                channel_token = ServerChannels.create_channel([server.key for server in servers], user)
+                results, previous_cursor, next_cursor = self.get_results_with_cursors(
+                    Server.query_all(), Server.query_all_reverse(), 5
+                )
+                if not results:
+                    for server in Server.query():
+                        server.put()
+                    results, previous_cursor, next_cursor = self.get_results_with_cursors(
+                        Server.query_all(), Server.query_all_reverse(), 5
+                    )
+                channel_token = ''
+                if results:
+                    channel_token = ServerChannels.create_channel([server.key for server in results], user)
                 context = {
-                    'servers': servers,
-                    'channel_token': channel_token
+                    'servers': results,
+                    'channel_token': channel_token,
+                    'previous_cursor': previous_cursor,
+                    'next_cursor': next_cursor
                 }
                 self.render_template('main.html', context=context)
             else:
@@ -171,89 +180,6 @@ class HomeHandler(MainPagingHandler):
 
 class ChatForm(form.Form):
     chat = fields.StringField(u'Chat', validators=[validators.DataRequired()])
-
-
-class ChatsHandler(MainPagingHandler):
-    @authentication_required(authenticate=authenticate)
-    def get(self, server_key=None):
-        server = self.get_server_by_key(server_key, abort=False)
-        if server is None:
-            self.redirect_to_server('chats')
-            return
-        self.request.user.record_chat_view()
-        query_string = self.request.get('q', None)
-        # Search
-        if query_string:
-            page = 0
-            cursor = self.request.get('cursor', None)
-            if cursor and cursor.startswith('PAGE_'):
-                page = int(cursor.strip()[5:])
-            offset = page*RESULTS_PER_PAGE
-            results, number_found, _ = search.search_log_lines(
-                'chat:{0}'.format(query_string),
-                server_key=server.key,
-                limit=RESULTS_PER_PAGE,
-                offset=offset
-            )
-            previous_cursor = next_cursor = None
-            if page > 0:
-                previous_cursor = u'PAGE_{0}&q={1}'.format(page - 1 if page > 0 else 0, query_string)
-            if number_found > offset + RESULTS_PER_PAGE:
-                next_cursor = u'PAGE_{0}&q={1}'.format(page + 1, query_string)
-        # Latest
-        else:
-            results, previous_cursor, next_cursor = self.get_results_with_cursors(
-                LogLine.query_latest_events(server.key), LogLine.query_oldest_events(server.key), RESULTS_PER_PAGE
-            )
-        context = {'chats': results, 'query_string': query_string or ''}
-        if self.request.is_xhr:
-            self.render_xhr_response(server.key, context, next_cursor)
-        else:
-            self.render_html_response(server.key, context, next_cursor, previous_cursor)
-
-    def render_xhr_response(self, server_key, context, next_cursor):
-        if next_cursor:
-            context.update({
-                'next_uri': uri_for_pagination('chats', server_key=server_key.urlsafe(), cursor=next_cursor)
-            })
-        self.response.headers['Content-Type'] = 'text/javascript'
-        self.render_template('chats.js', context=context)
-
-    def render_html_response(self, server_key, context, next_cursor, previous_cursor):
-        user = self.request.user
-        channel_token = ServerChannels.create_channel(server_key, user)
-        context.update({
-            'next_cursor': next_cursor,
-            'previous_cursor': previous_cursor,
-            'channel_token': channel_token,
-            'username': user.get_server_play_name(server_key),
-        })
-        self.render_template('chats.html', context=context)
-
-    @authentication_required(authenticate=authenticate)
-    def post(self, server_key=None):
-        server = self.get_server_by_key(server_key, abort=False)
-        if server is None:
-            self.redirect_to_server('chats')
-            return
-        try:
-            user = self.request.user
-            if not (user and user.active):
-                self.abort(404)
-            form = ChatForm(self.request.POST)
-            if form.validate():
-                chat = form.chat.data
-                username = user.get_server_play_name(server.key)
-                if chat:
-                    if username:
-                        chat = u"/say <{0}> {1}".format(username, chat)
-                    else:
-                        chat = u"/say {0}".format(chat)
-                    Command.push(server.key, username, chat)
-        except Exception, e:
-            logging.error(u"Error POSTing chat: {0}".format(e))
-            self.abort(500)
-        self.response.set_status(201)
 
 
 class PlayersHandler(MainPagingHandler):
@@ -506,13 +432,11 @@ application = webapp2.WSGIApplication(
         RedirectRoute('/', handler=MainHandler, name="main"),
         RedirectRoute('/gae_claim_callback', handler=GoogleAppEngineUserClaimHandler, name='gae_claim_callback'),  # noqa
         RedirectRoute('/players/claim', handler=UsernameClaimHandler, strict_slash=True, name="username_claim"),
-        RedirectRoute('/chats', handler=ChatsHandler, strict_slash=True, name="naked_chats"),
         RedirectRoute('/players', handler=PlayersHandler, strict_slash=True, name="naked_players"),
         RedirectRoute('/sessions', handler=PlaySessionsHandler, strict_slash=True, name="naked_play_sessions"),
         RedirectRoute('/screenshots', handler=ScreenShotsHandler, strict_slash=True, name="naked_screenshots_lol"),
         RedirectRoute('/screenshots/<key>/create_blur', handler=ScreenShotBlurHandler, strict_slash=True, name="naked_screenshots_blur"),  # noqa
         RedirectRoute('/servers/<server_key>', handler=HomeHandler, name="home"),
-        RedirectRoute('/servers/<server_key>/chats', handler=ChatsHandler, strict_slash=True, name="chats"),
         RedirectRoute('/servers/<server_key>/players', handler=PlayersHandler, strict_slash=True, name="players"),
         RedirectRoute('/servers/<server_key>/sessions', handler=PlaySessionsHandler, strict_slash=True, name="play_sessions"),  # noqa
         RedirectRoute('/servers/<server_key>/screenshot_upload', handler=ScreenShotUploadHandler, strict_slash=True, name="screenshot_upload"),  # noqa

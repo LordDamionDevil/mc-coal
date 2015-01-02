@@ -29,7 +29,7 @@
         <nav>
             <ul>
                 {% if user and user.active %}
-                    <li class="user"><a href="{{ uri_for('user_profile') }}">{{ user.name|truncate(15, True) }}</a></li>{% if user.admin %}<a href="{{ uri_for('admin') }}"><li {% if nav=="Admin" %}class="on"{% endif %}>Admin</li></a>{% endif %}{% if server %}<a href="{{ uri_for('screenshots', server_key=server.url_key) }}"><li {% if nav=="ScreenShots" %}class="on"{% endif %}>Screens</li></a><a href="{{ uri_for('players', server_key=server.url_key) }}"><li {% if nav=="Players" %}class="on"{% endif %}>Players</li></a><a href="{{ uri_for('play_sessions', server_key=server.url_key) }}"><li {% if nav=="Sessions" %}class="on"{% endif %}>Sessions</li></a><a href="{{ uri_for('chats', server_key=server.url_key) }}"><li {% if nav=="Chats" %}class="on"{% endif %}>Chats</li></a>{% endif %}
+                    <li class="user"><a href="{{ uri_for('user_profile') }}">{{ user.name|truncate(15, True) }}</a></li>{% if user.admin %}<a href="{{ uri_for('admin') }}"><li {% if nav=="Admin" %}class="on"{% endif %}>Admin</li></a>{% endif %}{% if server %}<a href="{{ uri_for('screenshots', server_key=server.url_key) }}"><li {% if nav=="ScreenShots" %}class="on"{% endif %}>Screens</li></a><a href="{{ uri_for('players', server_key=server.url_key) }}"><li {% if nav=="Players" %}class="on"{% endif %}>Players</li></a><a href="{{ uri_for('play_sessions', server_key=server.url_key) }}"><li {% if nav=="Sessions" %}class="on"{% endif %}>Sessions</li></a>{% endif %}
                 {% endif %}
             </ul>
         </nav>
@@ -53,17 +53,7 @@
     <footer>
         {% block footer %}
         <div id="footer">
-            <span class="copy"><a href="http://mc-coal.org" target="_blank">MC COAL: MC Community Online Access Log</a></span>
-            <span class="right">
-                <div class="left code_credit">
-                    Code: <a href="http://thomasbohmbach.com" target="_blank">Thomas Bohmbach, Jr.</a><br>
-                    <span class="lesser_credit">
-                        With contributions by <a href="https://github.com/mc-coal/mc-coal/issues/11" target="_blank">Mark Larimer</a>
-                    </span>
-                </div>
-                &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
-                Design: <a href="http://brentgustafson.com" target="_blank">Brent Gustafson</a>
-            </span>
+            <span class="copy">&copy; Copyright MMXV <a href="http://mc-coal.org" target="_blank">MC COAL: MC Community Online Access Log</a></span>
         </div>
         {% endblock %}
     </footer>

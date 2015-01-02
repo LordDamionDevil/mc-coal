@@ -1,7 +1,5 @@
 import datetime
-import logging
 import random
-import time
 
 from google.appengine.api import channel
 from google.appengine.ext import ndb
@@ -25,10 +23,9 @@ class ServerChannels(ndb.Model):
         string_id = '.'.join(
             server_key.string_id() or '{0}'.format(server_key.integer_id()) for server_key in server_keys
         )
-        return '{0}:{1}:{2}{3}'.format(
+        return '{0}:{1}:{2}'.format(
             string_id,
             user.key.id(),
-            int(time.time()),
             random.randrange(999)
         )
 
@@ -71,17 +68,17 @@ class ServerChannels(ndb.Model):
 
     @classmethod
     def send_message(cls, log_line, event):
-        message = {
-            'event': event,
-            'date': datetime_filter(log_line.timestamp, format='%b %d, %Y'),
-            'time': datetime_filter(log_line.timestamp, format='%I:%M%p'),
-            'username': log_line.username,
-            'chat': log_line.chat,
-            'death_message': log_line.death_message,
-            'achievement_message': log_line.achievement_message
-        }
         client_ids = cls.get_client_ids(log_line.server_key)
         if client_ids:
+            message = {
+                'event': event,
+                'date': datetime_filter(log_line.timestamp, format='%b %d, %Y'),
+                'time': datetime_filter(log_line.timestamp, format='%I:%M%p'),
+                'username': log_line.username,
+                'chat': log_line.chat,
+                'death_message': log_line.death_message,
+                'achievement_message': log_line.achievement_message
+            }
             for client_id in client_ids:
                 try:
                     user = cls.get_user_key(client_id).get()
@@ -186,14 +183,12 @@ class ServerChannels(ndb.Model):
 class ConnectedHandler(RequestHandler):
     def post(self):
         client_id = self.request.get('from')
-        logging.info(u'channel client %s connected!' % client_id)
         ServerChannels.add_client_id(client_id)
 
 
 class DisconnectedHandler(RequestHandler):
     def post(self):
         client_id = self.request.get('from')
-        logging.info(u'channel client %s disconnected!' % client_id)
         ServerChannels.remove_client_id(client_id)
 
 

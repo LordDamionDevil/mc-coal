@@ -3,25 +3,34 @@ indexes:
 - kind: Server
   properties:
   - name: active
-  - name: created
-
-- kind: Server
-  properties:
-  - name: active
+  - name: last_played
+    direction: desc
   - name: created
     direction: desc
 
 - kind: Server
   properties:
   - name: active
-  - name: is_running
+  - name: last_played
   - name: created
 
 - kind: Server
   properties:
   - name: active
-  - name: short_name
+  - name: is_running
+  - name: last_played
+    direction: desc
   - name: created
+    direction: desc
+
+- kind: Server
+  properties:
+  - name: active
+  - name: short_name
+  - name: last_played
+    direction: desc
+  - name: created
+    direction: desc
 
 - kind: LogLine
   ancestor: yes

@@ -101,7 +101,6 @@ class User(auth_models.User):
     usernames = ndb.StringProperty(repeated=True)
     timezone_name = ndb.StringProperty(default='UTC')
     last_login = ndb.DateTimeProperty()
-    last_chat_view = ndb.DateTimeProperty()
     created = ndb.DateTimeProperty(auto_now_add=True)
     updated = ndb.DateTimeProperty(auto_now=True)
 
@@ -153,12 +152,6 @@ class User(auth_models.User):
         if self.username:
             return Player.get_or_create(server_key, self.username)
         return None
-
-    def record_chat_view(self, dt=None):
-        if dt is None:
-            dt = datetime.datetime.utcnow()
-        self.last_chat_view = dt
-        self.put()
 
     def is_client_id_authorized(self, client_id):
         return client_id in self.authorized_client_ids
@@ -341,6 +334,7 @@ class Server(ndb.Model):
     timestamp = ndb.DateTimeProperty()
     queued = ndb.DateTimeProperty()
     idle = ndb.DateTimeProperty()
+    last_played = ndb.DateTimeProperty(default=None)
     agent_key = ndb.KeyProperty()
     created = ndb.DateTimeProperty(auto_now_add=True)
     updated = ndb.DateTimeProperty(auto_now=True)
@@ -441,6 +435,7 @@ class Server(ndb.Model):
             if not self.mc_properties.eula_agree:
                 raise Exception("You must agree to the Mojang Minecraft EULA to Play")
             start_server(self, reserved_ports=Server.reserved_ports(ignore_server=self))
+            self.last_played = datetime.datetime.utcnow()
             self.update_status(status=SERVER_QUEUED_START)
 
     def backup(self):
@@ -644,11 +639,11 @@ class Server(ndb.Model):
 
     @classmethod
     def query_all(cls):
-        return cls.query().filter(cls.active == True).order(cls.created)  # noqa
+        return cls.query().filter(cls.active == True).order(-cls.last_played).order(-cls.created)  # noqa
 
     @classmethod
     def query_all_reverse(cls):
-        return cls.query().filter(cls.active == True).order(-cls.created)  # noqa
+        return cls.query().filter(cls.active == True).order(cls.last_played).order(cls.created)  # noqa
 
     @classmethod
     def query_running(cls):

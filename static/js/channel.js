@@ -9,18 +9,18 @@ var channel = {
     },
 
     initChannel: function(token) {
-        var new_channel = new goog.appengine.Channel(token);
-        var socket = new_channel.open();
-        socket.onopen = channel.socketOpened;
-        socket.onmessage = channel.socketMessage;
-        socket.onerror = channel.socketError;
-        socket.onclose = channel.socketClosed;
+        if (token) {
+            var new_channel = new goog.appengine.Channel(token);
+            var socket = new_channel.open();
+            socket.onopen = channel.socketOpened;
+            socket.onmessage = channel.socketMessage;
+            socket.onerror = channel.socketError;
+            socket.onclose = channel.socketClosed;
+        }
     },
 
     initChannels: function() {
-        $('meta[name="channel-token"]').each(function(index) {
-            channel.initChannel($(this).attr('content'));
-        });
+        channel.initChannel($('meta[name="channel-token"]').attr('content'));
     },
 
     socketOpened: function() {},
@@ -32,7 +32,7 @@ var channel = {
         }
         else {
             channel.socketChatMessage(data);
-        }
+        };
     },
 
     socketChatMessage: function(data) {
@@ -95,19 +95,26 @@ var channel = {
         time_element_id = "#" + data.server_id + " .server_time";
         weather_element_id = "#" + data.server_id + " .server_weather";
         if ($(day_element_id).length) {
-            $(day_element_id).text(data.server_day);
-            $(time_element_id).text(data.server_time);
-            if (data.is_raining) {
-                if (data.is_thundering) {
-                    $(weather_element_id).text("Raining & Thundering");
+            if (data.server_day != null) {
+                $(day_element_id).text(data.server_day);
+                $(time_element_id).text(data.server_time);
+                if (data.is_raining) {
+                    if (data.is_thundering) {
+                        $(weather_element_id).text("Raining & Thundering");
+                    }
+                    else {
+                        $(weather_element_id).text("Raining");
+                    };
                 }
                 else {
-                    $(weather_element_id).text("Raining");
+                    $(weather_element_id).text("Clear");
                 };
             }
             else {
-                $(weather_element_id).text("Clear");
-            };
+                $(day_element_id).text("0");
+                $(time_element_id).text("0");
+                $(weather_element_id).text("Not Played");
+            }
         }
     },
 
