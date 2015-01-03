@@ -604,6 +604,10 @@ header nav li.user:hover {
     display: none;
 }
 
+.playing_template {
+    display: none;
+}
+
 .sound_toggle {
     float: right;
     width: 90px;

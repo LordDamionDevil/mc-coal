@@ -62,9 +62,11 @@ var channel = {
                     break;
                 case 'login':
                     chatDiv.text('Logged In');
+                    channel.setPlayerPlaying(data.username);
                     break;
                 case 'logout':
                     chatDiv.text('Logged Out');
+                    channel.setPlayerNotPlaying(data.username);
                     break;
                 case 'death':
                     chatDiv.text(data.death_message);
@@ -75,6 +77,30 @@ var channel = {
             }
 
             eventDiv.prependTo('#live_events').slideDown('fast');
+        }
+    },
+
+    setPlayerPlaying: function(username) {
+        if ($('.playing').length) {
+            username_element_id = ".player#" + username;
+            if (! $(username_element_id).length) {
+                var userDiv = $('.playing_template').first().clone();
+                userDiv.removeClass('playing_template');
+                userDiv.attr('id', username);
+                userDiv.find('.avatar').css('background-image', 'url(https://minotar.net/helm/' + username + '/40)');
+                userDiv.find('.name').text(username);
+                userDiv.appendTo('#currently_playing').slideDown('fast');;
+            }
+        }
+    },
+
+    setPlayerNotPlaying: function(username) {
+        if ($('.playing').length) {
+            username_element_id = ".player#" + username;
+            if ($(username_element_id).length) {
+                $(username_element_id).slideUp('fast');
+                $(username_element_id).remove();
+            }
         }
     },
 
