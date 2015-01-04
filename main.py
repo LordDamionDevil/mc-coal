@@ -143,8 +143,9 @@ class HomeHandler(MainPagingHandler):
     def render_html_response(self, server, context, next_cursor, previous_cursor):
         user = self.request.user
         channel_token = ServerChannels.create_channel([server.key], user)
+        players = Player.query_all_reverse(server.key).fetch(100)
         context.update({
-            'open_sessions': server.open_sessions,
+            'players': players,
             'next_cursor': next_cursor,
             'previous_cursor': previous_cursor,
             'channel_token': channel_token,
@@ -180,20 +181,6 @@ class HomeHandler(MainPagingHandler):
 
 class ChatForm(form.Form):
     chat = fields.StringField(u'Chat', validators=[validators.DataRequired()])
-
-
-class PlayersHandler(MainPagingHandler):
-    @authentication_required(authenticate=authenticate)
-    def get(self, server_key=None):
-        server = self.get_server_by_key(server_key, abort=False)
-        if server is None:
-            self.redirect_to_server('players')
-            return
-        results, previous_cursor, next_cursor = self.get_results_with_cursors(
-            Player.query_all_reverse(server.key), Player.query_all(server.key), RESULTS_PER_PAGE
-        )
-        context = {'players': results, 'previous_cursor': previous_cursor, 'next_cursor': next_cursor}
-        self.render_template('players.html', context=context)
 
 
 class PlaySessionsHandler(MainPagingHandler):
@@ -432,12 +419,10 @@ application = webapp2.WSGIApplication(
         RedirectRoute('/', handler=MainHandler, name="main"),
         RedirectRoute('/gae_claim_callback', handler=GoogleAppEngineUserClaimHandler, name='gae_claim_callback'),  # noqa
         RedirectRoute('/players/claim', handler=UsernameClaimHandler, strict_slash=True, name="username_claim"),
-        RedirectRoute('/players', handler=PlayersHandler, strict_slash=True, name="naked_players"),
         RedirectRoute('/sessions', handler=PlaySessionsHandler, strict_slash=True, name="naked_play_sessions"),
         RedirectRoute('/screenshots', handler=ScreenShotsHandler, strict_slash=True, name="naked_screenshots_lol"),
         RedirectRoute('/screenshots/<key>/create_blur', handler=ScreenShotBlurHandler, strict_slash=True, name="naked_screenshots_blur"),  # noqa
         RedirectRoute('/servers/<server_key>', handler=HomeHandler, name="home"),
-        RedirectRoute('/servers/<server_key>/players', handler=PlayersHandler, strict_slash=True, name="players"),
         RedirectRoute('/servers/<server_key>/sessions', handler=PlaySessionsHandler, strict_slash=True, name="play_sessions"),  # noqa
         RedirectRoute('/servers/<server_key>/screenshot_upload', handler=ScreenShotUploadHandler, strict_slash=True, name="screenshot_upload"),  # noqa
         RedirectRoute('/servers/<server_key>/screenshot_uploaded', handler=ScreenShotUploadedHandler, strict_slash=True, name="screenshot_uploaded"),  # noqa

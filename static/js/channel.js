@@ -83,13 +83,17 @@ var channel = {
     setPlayerPlaying: function(username) {
         if ($('.playing').length) {
             username_element_id = ".player#" + username;
-            if (! $(username_element_id).length) {
+            if ($(username_element_id).length) {
+                $(username_element_id).find('.activity').addClass('on');
+                $(username_element_id).prependTo('#all_players').slideDown('fast');
+            }
+            else {
                 var userDiv = $('.playing_template').first().clone();
                 userDiv.removeClass('playing_template');
                 userDiv.attr('id', username);
                 userDiv.find('.avatar').css('background-image', 'url(https://minotar.net/helm/' + username + '/40)');
                 userDiv.find('.name').text(username);
-                userDiv.appendTo('#currently_playing').slideDown('fast');;
+                userDiv.prependTo('#all_players').slideDown('fast');
             }
         }
     },
@@ -98,8 +102,7 @@ var channel = {
         if ($('.playing').length) {
             username_element_id = ".player#" + username;
             if ($(username_element_id).length) {
-                $(username_element_id).slideUp('fast');
-                $(username_element_id).remove();
+                $(username_element_id).find('.activity').removeClass('on');
             }
         }
     },
@@ -139,7 +142,7 @@ var channel = {
             else {
                 $(day_element_id).text("0");
                 $(time_element_id).text("0");
-                $(weather_element_id).text("Not Played");
+                $(weather_element_id).text("Never Played");
             }
         }
     },

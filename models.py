@@ -308,7 +308,7 @@ class Server(ndb.Model):
     address = ndb.StringProperty()
     idle_timeout = ndb.IntegerProperty(default=5)
     active = ndb.BooleanProperty(default=True)
-    status = ndb.StringProperty(default=SERVER_UNKNOWN)
+    status = ndb.StringProperty(default=SERVER_STOPPED)
     completed = ndb.IntegerProperty(default=None)
     is_running = ndb.ComputedProperty(lambda self: self.status == SERVER_RUNNING)
     is_stopped = ndb.ComputedProperty(lambda self: self.status == SERVER_STOPPED)

@@ -31,15 +31,15 @@
     {{ macros.server_status(server, user, utcnow=utcnow) }}
 
     <div class="wrap">
-    <div class="player_list playing left">
-        <h3 class="box">Active Players</h3>
-        <div class="box" id="currently_playing">
-            {% if open_sessions %}
-                {% for open_session in open_sessions %}
-                    <div class="player wrap" id="{{ open_session.username }}">
-                        <div class="activity on"></div>
-                        <div class="avatar" style="background-image: url(https://minotar.net/helm/{{open_session.username}}/40)"></div>
-                        <div class="name">{{ open_session.username }}</div>
+    <div class="player_list left playing">
+        <h3 class="box">Players</h3>
+        <div class="box" id="all_players">
+            {% if players %}
+                {% for player in players %}
+                    <div class="player wrap" id="{{ player.username }}">
+                        <div class="activity{% if player.is_playing %} on{% endif %}"></div>
+                        <div class="avatar" style="background-image: url(https://minotar.net/helm/{{player.username}}/40)"></div>
+                        <div class="name">{{ player.username }}</div>
                     </div>
                 {% endfor %}
             {% endif %}
