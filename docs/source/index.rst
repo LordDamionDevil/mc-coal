@@ -25,4 +25,5 @@ Documentation
      :maxdepth: 4
 
      install
+     upgrade
      api

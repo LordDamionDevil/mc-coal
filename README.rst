@@ -19,9 +19,9 @@ Features
   * Works with vanilla Minecraft multi-player servers
 
 
-=================
-COAL Installation
-=================
+===============
+Installing COAL
+===============
 
 -------------
 Prerequisites
@@ -30,16 +30,35 @@ Prerequisites
 * A free `Google Cloud Platform <https://cloud.google.com/>`_ account.
 * Optional But Recommended: A free `Github <https://github.com/>`_ account.
 
--------------------------
-Deploy and Configure COAL
--------------------------
+--------
+Versions
+--------
+^^^^^^^^^^^^^^^^^^^^
+Golden Carrot (v1.1)
+^^^^^^^^^^^^^^^^^^^^
+1. Dynamic world status updates.
+2. Better handling of crashed Minecraft server processes.
+3. Collapse 'Chats' and 'Players' pages to the world home page.
+
+`Tagged on January 4, 2015 <https://github.com/mc-coal/mc-coal/releases/tag/golden_carrot_v1.1>`_
+
+^^^^^^^^^^
+Steak (v1)
+^^^^^^^^^^
+1. Initial release.
+
+`Tagged on October 20, 2014 <https://github.com/mc-coal/mc-coal/releases/tag/steak_v1>`_
+
+------------
+Instructions
+------------
 1. `Create a Google Cloud Project <https://cloud.google.com/console/project>`_ for your new COAL installation. Take note of the Project ID you select (e.g. `[my-project-id]`).
 2. Optionally, in ``Settings``, enable billing. COAL should be able to run comfortably under the daily free App Engine quota for most relatively small, lightly-populated worlds.
 3. `Fork <https://help.github.com/articles/fork-a-repo>`_, clone, or download the `MC COAL code repository <https://github.com/mc-coal/mc-coal>`_. Make sure any new fork or clone is a private repository as it will contain sensitive information (like the ``main_SECRET_KEY``).
 
   .. note:: The master/trunk of the `MC COAL code repository <https://github.com/mc-coal/mc-coal>`_ will always contain the latest tagged, stable release. Ongoing (potentially unstable) development will be done on branches.
 
-4. Change the application name (i.e. ``mc-coal``) in the first line of your repository's `app.yaml <app.yaml>`_ to the Project ID you created above.
+4. Change the application name (i.e. ``my-mc-coal``) in the first line of your repository's `app.yaml <app.yaml>`_ to the Project ID you created above.
 5. Update your installation settings in your repository's `appengine_config.py <appengine_config.py>`_ file:
 
   a. Change the ``main_SECRET_KEY`` value to a unique random string. You can use this `random.org link <http://www.random.org/strings/?num=1&len=20&digits=on&upperalpha=on&loweralpha=on&unique=on&format=html&rnd=new>`_ to generate a unique string value.
@@ -54,7 +73,7 @@ Deploy and Configure COAL
   d. Add the Google Compute Engine service account email address to the ``acl`` section of `queue.yaml <queue.yaml>`_. When finished, the file should look something like this
 
     ::
-      
+
       queue:
       - name: default
         rate: 5/s
@@ -90,7 +109,7 @@ Deploy and Configure COAL
 World Hosting
 =============
 
-Next, you'll set up your minecraft world(s). There are two options: let your COAL host your world on Google Compute Engine (easy!) or host your world elsewhere (more work for you!). You can mix both kinds of hosted worlds on a single COAL install.
+There are two options for hosting your minecraft world(s): let your COAL host your world on Google Compute Engine (easy!) or host your world elsewhere (more work for you!). You can mix both kinds of hosted worlds on a single COAL install.
 
 ----------------------------------------
 Hosting Worlds On Google Compute Engine
@@ -135,14 +154,14 @@ Agent Installation
 2. Download the following files from your COAL into the new ``mc-coal`` directory:
 
   ::
-    
+
     wget https://[my-project-id].appspot.com/mc/timezones.py -o timezones.py
     wget https://[my-project-id].appspot.com/mc/mc_coal_agent.py -o mc_coal_agent.py
 
 3. Download the following files from your COAL into your minecraft server's directory
 
   ::
-    
+
     wget https://[my-project-id].appspot.com/mc/log4j2.xml -o log4j2.xml
     wget https://[my-project-id].appspot.com/mc/mc-start.sh -o mc-start.sh
     wget https://[my-project-id].appspot.com/mc/mc-stop.sh -o mc-stop.sh
@@ -155,7 +174,7 @@ Run Agent
 2. On your Minecraft server host, in the ``mc-coal`` directory, run ``mc_coal_agent.py`` with the ``coal_host``, ``agent_client_id``, and ``agent_secret`` for your server:
 
   ::
-    
+
     [~/minecraft-server/mc-coal] $ python mc_coal_agent.py --coal_host=[my-project-id].appspot.com --agent_client_id=mc-coal-agent-12345 --agent_secret=ow9mLT8rev1e8og5AWeN1TyBM7EXZYiCntw8dj4d
     2014-01-01 23:00:01 : main     INFO   Monitoring '../server.log' and reporting to '[my-project-id].appspot.com'...
 
@@ -173,9 +192,28 @@ Run Agent
 5. To stop the minecraft server later, use the ``mc-stop.sh`` script:
 
   ::
-  
+
     [~/minecraft_server] $ ./mc-stop.sh
     Stopping MineCraft Server PID=5989
     2014-01-22 22:12:19,540 DEBUG ServletContext not present - WebLookup not added
     2014-01-22 22:12:19,541 DEBUG Shutting down FileManager server.log
     MineCraft shutdown complete.
+
+==============
+Upgrading COAL
+==============
+
+------------
+Instructions
+------------
+In general, all that is needed to upgrade your existing COAL installation is to deploy the new code from the `MC COAL code repository <https://github.com/mc-coal/mc-coal>`_ taking care to keep your existing changes to `app.yaml <app.yaml>`_ and `appengine_config.py <appengine_config.py>`_.
+
+---------------------------------
+Upgrading To Golden Carrot (v1.1)
+---------------------------------
+This version adds new database indexes. As a result, your COAL installation may return errors until the new indexes are built. This usually only takes a few minutes.
+
+-----------------------
+Upgrading To Steak (v1)
+-----------------------
+This version adds new database indexes. As a result, your COAL installation may return errors until the new indexes are built. This usually only takes a few minutes.
