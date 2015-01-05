@@ -21,17 +21,17 @@ class ServerChannelsTest(BaseTest):
         server = models.Server.create()
         models.User.create_user('1234', email='bill@example.com')
         user = models.User.lookup(email='bill@example.com')
-        client_id = models.ServerChannels.get_client_id(server.key, user)
-        self.assertTrue(client_id.startswith('{0}.{1}'.format(server.key.id(), user.key.id())))
-        self.assertEqual(server.key, models.ServerChannels.get_server_key(client_id))
+        client_id = models.ServerChannels.get_client_id([server.key], user)
+        self.assertTrue(client_id.startswith('{0}:{1}'.format(server.key.id(), user.key.id())))
+        self.assertEqual([server.key], models.ServerChannels.get_server_keys(client_id))
 
     def test_get_alpha_client_id(self):
         server = models.Server.create(id='test_server')
         models.User.create_user('1234', email='bill@example.com')
         user = models.User.lookup(email='bill@example.com')
-        client_id = models.ServerChannels.get_client_id(server.key, user)
-        self.assertTrue(client_id.startswith('{0}.{1}'.format(server.key.id(), user.key.id())))
-        self.assertEqual(server.key, models.ServerChannels.get_server_key(client_id))
+        client_id = models.ServerChannels.get_client_id([server.key], user)
+        self.assertTrue(client_id.startswith('{0}:{1}'.format(server.key.id(), user.key.id())))
+        self.assertEqual([server.key], models.ServerChannels.get_server_keys(client_id))
 
 
 class SendLogLineTest(BaseTest):
@@ -66,8 +66,8 @@ class SendLogLineTest(BaseTest):
         self.tracker = minimock.TraceTracker()
         models.User.create_user('4321', email='joe@example.com')
         user = models.User.lookup(email='bill@example.com')
-        client_id = '{0}.{1}.1234.5678'.format(self.server.key.id(), self.user.key.id())
-        client_id2 = '{0}.{1}.1234.5678'.format(self.server.key.id(), user.key.id())
+        client_id = '{0}:{1}:1234.5678'.format(self.server.key.id(), self.user.key.id())
+        client_id2 = '{0}:{1}:1234.5678'.format(self.server.key.id(), user.key.id())
         minimock.mock('channel.ServerChannels.get_client_ids', returns=[client_id, client_id2], tracker=None)
         minimock.mock('gae_channel.send_message', tracker=self.tracker)
         self.interesting_log_line.send_message()
@@ -81,7 +81,7 @@ class SendLogLineTest(BaseTest):
         self.user.timezone_name = 'US/Pacific'
         self.user.put()
         self.tracker = minimock.TraceTracker()
-        client_id = '{0}.{1}.1234.5678'.format(self.server.key.id(), self.user.key.id())
+        client_id = '{0}:{1}:1234.5678'.format(self.server.key.id(), self.user.key.id())
         minimock.mock('channel.ServerChannels.get_client_ids', returns=[client_id], tracker=None)
         minimock.mock('gae_channel.send_message', tracker=self.tracker)
         js = '{"username": "quazifene", "achievement_message": null, "chat": "is there anybody in there?", "time": "05:01pm", "date": "Mar 23, 2013", "event": "chat", "death_message": null}'

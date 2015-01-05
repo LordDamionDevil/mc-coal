@@ -182,11 +182,11 @@ class ServerTest(BaseTest):
         self.server.mc_properties.put()
         self.server2.mc_properties.server_port = 25566
         self.server2.mc_properties.put()
-        self.assertEqual([25565, 25566],  models.Server.reserved_ports())
+        self.assertEqual([25566, 25565],  models.Server.reserved_ports())
         self.server3 = models.Server.create()
         self.server3.mc_properties.server_port = 25567
         self.server3.mc_properties.put()
-        self.assertEqual([25565, 25567],  models.Server.reserved_ports(ignore_server=self.server2))
+        self.assertEqual([25567, 25565],  models.Server.reserved_ports(ignore_server=self.server2))
         self.server2.active = False
         self.server2.put()
         self.assertEqual([25567],  models.Server.reserved_ports(ignore_server=self.server))
@@ -243,21 +243,21 @@ class AddServerChannelTest(BaseTest):
         self.user = models.User.lookup(email='bill@example.com')
 
     def test_adds_client_id_to_lookup_store_despite_missing_lookup_entity(self):
-        client_id = channel.ServerChannels.get_client_id(self.server.key, self.user)
+        client_id = channel.ServerChannels.get_client_id([self.server.key], self.user)
         channel.ServerChannels.add_client_id(client_id)
         self.assertEqual([client_id], channel.ServerChannels.get_client_ids(self.server.key))
 
     def test_adds_client_id_to_existing_lookup_store(self):
-        client_id = channel.ServerChannels.get_client_id(self.server.key, self.user)
+        client_id = channel.ServerChannels.get_client_id([self.server.key], self.user)
         channel.ServerChannels.add_client_id(client_id)
         models.User.create_user('5678', email='ted@example.com')
         user2 = models.User.lookup(email='ted@example.com')
-        client_id2 = channel.ServerChannels.get_client_id(self.server.key, user2)
+        client_id2 = channel.ServerChannels.get_client_id([self.server.key], user2)
         channel.ServerChannels.add_client_id(client_id2)
         self.assertEqual([client_id, client_id2], channel.ServerChannels.get_client_ids(self.server.key))
 
     def test_does_not_add_client_id_to_lookup_store_if_already_exists_there(self):
-        client_id = channel.ServerChannels.get_client_id(self.server.key, self.user)
+        client_id = channel.ServerChannels.get_client_id([self.server.key], self.user)
         channel.ServerChannels.add_client_id(client_id)
         channel.ServerChannels.add_client_id(client_id)
         self.assertEqual([client_id], channel.ServerChannels.get_client_ids(self.server.key))
@@ -271,26 +271,26 @@ class RemoveServerChannelTest(BaseTest):
         self.user = models.User.lookup(email='bill@example.com')
 
     def test_removes_client_id_from_lookup_store(self):
-        client_id = channel.ServerChannels.get_client_id(self.server.key, self.user)
+        client_id = channel.ServerChannels.get_client_id([self.server.key], self.user)
         channel.ServerChannels.add_client_id(client_id)
         models.User.create_user('5678', email='ted@example.com')
         user2 = models.User.lookup(email='ted@example.com')
-        client_id2 = channel.ServerChannels.get_client_id(self.server.key, user2)
+        client_id2 = channel.ServerChannels.get_client_id([self.server.key], user2)
         channel.ServerChannels.add_client_id(client_id2)
         channel.ServerChannels.remove_client_id(client_id)
         self.assertEqual([client_id2], channel.ServerChannels.get_client_ids(self.server.key))
 
     def test_no_ops_if_missing_lookup_entity(self):
-        client_id = channel.ServerChannels.get_client_id(self.server.key, self.user)
+        client_id = channel.ServerChannels.get_client_id([self.server.key], self.user)
         channel.ServerChannels.remove_client_id(client_id)
         self.assertEqual([], channel.ServerChannels.get_client_ids(self.server.key))
 
     def test_no_ops_if_client_id_is_not_in_lookup_store(self):
-        client_id = channel.ServerChannels.get_client_id(self.server.key, self.user)
+        client_id = channel.ServerChannels.get_client_id([self.server.key], self.user)
         channel.ServerChannels.add_client_id(client_id)
         models.User.create_user('5678', email='ted@example.com')
         user2 = models.User.lookup(email='ted@example.com')
-        client_id2 = channel.ServerChannels.get_client_id(self.server.key, user2)
+        client_id2 = channel.ServerChannels.get_client_id([self.server.key], user2)
         channel.ServerChannels.remove_client_id(client_id2)
         self.assertEqual([client_id], channel.ServerChannels.get_client_ids(self.server.key))
 

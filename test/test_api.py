@@ -1047,7 +1047,7 @@ class ServersTest(AdminApiTest, MultiPageApiTest):
         self.assertLength(len(self.servers), reponse_servers)
         for i, server in enumerate(reponse_servers):
             self.assertEqual(NUM_SERVER_FIELDS, len(server))
-            self.assertEqual(models.SERVER_UNKNOWN, server['status'])
+            self.assertEqual(models.SERVER_STOPPED, server['status'])
 
     def test_get_unauth(self):
         if self.url:
@@ -1066,7 +1066,7 @@ class ServersTest(AdminApiTest, MultiPageApiTest):
         self.assertLength(len(self.servers)-1, reponse_servers)
         for i, server in enumerate(reponse_servers):
             self.assertEqual(NUM_SERVER_FIELDS, len(server))
-            self.assertEqual(models.SERVER_UNKNOWN, server['status'])
+            self.assertEqual(models.SERVER_STOPPED, server['status'])
 
     def test_post(self):
         name = 'Brave New World'
@@ -1219,7 +1219,7 @@ class ServerKeyTest(AdminApiTest, KeyApiTest):
         self.assertEqual(NUM_SERVER_FIELDS, len(server))
         self.assertEqual(self.server.key.urlsafe(), server['key'])
         self.assertEqual(self.server.name, server['name'])
-        self.assertEqual(models.SERVER_UNKNOWN, server['status'])
+        self.assertEqual(models.SERVER_STOPPED, server['status'])
 
     def test_get_unauth(self):
         if self.url:
@@ -1390,6 +1390,7 @@ class ServerPauseTest(AdminApiTest):
         path = os.path.dirname(__file__) + '/../'
         self.testbed.init_taskqueue_stub(root_path=path)
         self.server.is_gce = True
+        self.server.status = models.SERVER_RUNNING
         self.server.put()
 
     def test_post(self):

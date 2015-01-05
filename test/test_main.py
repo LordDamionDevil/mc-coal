@@ -19,7 +19,7 @@ class MainTest(AuthTest):
     def test_get(self):
         self.log_in_user()
         response = self.get()
-        self.assertRedirects(response)
+        self.assertOK(response)
 
     def test_get_auth(self):
         pass
@@ -36,7 +36,7 @@ class MainTest(AuthTest):
     def test_get_logout(self):
         self.log_in_user()
         response = self.get()
-        self.assertRedirects(response)
+        self.assertOK(response)
         self.assertLoggedIn(response)
         self.log_out_user()
         response = self.get()
@@ -45,14 +45,14 @@ class MainTest(AuthTest):
     def test_get_login_again(self):
         self.log_in_user()
         response = self.get()
-        self.assertRedirects(response)
+        self.assertOK(response)
         self.assertLoggedIn(response)
         self.log_out_user()
         response = self.get()
         self.assertOK(response)
         self.log_in_user()
         response = self.get()
-        self.assertRedirects(response)
+        self.assertOK(response)
         self.assertLoggedIn(response)
 
     def test_get_multi_server(self):
@@ -155,7 +155,7 @@ class HomeTest(ServerAuthTest):
 
 
 class ChatsTest(ServerAuthTest):
-    URL = '/servers/{0}/chats'
+    URL = '/servers/{0}'
 
     @property
     def url(self):
@@ -191,36 +191,8 @@ class NakedTest(AuthTest):
                 self.assertMethodNotAllowed(response)
 
 
-class NakedChatsTest(NakedTest):
-    URL = '/chats'
-
-    def setUp(self):
-        super(NakedChatsTest, self).setUp()
-        self.redirect_to = '/servers/{0}/chats'.format(self.server.url_key)
-
-    def test_get(self):
-        self.log_in_user()
-        response = self.get()
-        self.assertRedirects(response, to=self.redirect_to)
-
-    def test_get_multi_server(self):
-        Server.create()
-        self.log_in_user()
-        response = self.get()
-        self.assertRedirects(response, to='/')
-
-    def test_get_auth(self):
-        pass
-
-    def test_get_login_again(self):
-        pass
-
-    def test_get_logout(self):
-        pass
-
-
 class ChatsInfiniteScrollTest(ServerAuthTest):
-    URL = '/servers/{0}/chats'
+    URL = '/servers/{0}'
 
     @property
     def url(self):
@@ -240,47 +212,6 @@ class ChatsInfiniteScrollTest(ServerAuthTest):
         self.log_in_user()
         response = self.get(headers={'X-Requested-With': 'XMLHttpRequest'})
         response.mustcontain("""$('#live_events').append""")
-
-
-class PlayersTest(ServerAuthTest):
-    URL = '/servers/{0}/players'
-
-    @property
-    def url(self):
-        return self.URL.format(self.server.key.urlsafe())
-
-    def test_get(self):
-        self.log_in_user()
-        response = self.get()
-        self.assertOK(response)
-
-
-class NakedPlayersTest(NakedTest):
-    URL = '/players'
-
-    def setUp(self):
-        super(NakedPlayersTest, self).setUp()
-        self.redirect_to = '/servers/{0}/players'.format(self.server.key.urlsafe())
-
-    def test_get(self):
-        self.log_in_user()
-        response = self.get()
-        self.assertRedirects(response, to=self.redirect_to)
-
-    def test_get_multi_server(self):
-        Server.create()
-        self.log_in_user()
-        response = self.get()
-        self.assertRedirects(response, to='/')
-
-    def test_get_auth(self):
-        pass
-
-    def test_get_login_again(self):
-        pass
-
-    def test_get_logout(self):
-        pass
 
 
 class PlaySessionsTest(ServerAuthTest):
