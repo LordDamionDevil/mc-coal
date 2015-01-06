@@ -17,9 +17,9 @@
 </head>
 <body>
     {% if user and user.active %}
-        <img src="{{ bg_img or '/img/cap/spire_blur.jpg' }}" id="bg"/>
+        <img src="{{ bg_img or '/img/cap/spire_blur.jpg' }}" class="bg"/>
     {% else %}
-        <img src="/img/cap/spire_blur.jpg" id="bg"/>
+        <img src="/img/cap/spire_blur.jpg" class="bg"/>
     {% endif %}
 
     <header class="wrap">
@@ -60,7 +60,7 @@
 
     <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
     <script src="/js/plugins.js"></script> <!-- paste jQuery plugins here -->
-    <script src="/js/main.js"></script>
+    <script src="/js/bg.js"></script>
 
     {% block js %}{% endblock %}
 

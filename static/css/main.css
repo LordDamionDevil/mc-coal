@@ -218,7 +218,7 @@ input[type="password"] {
 }
 
 /* SITE DIMENSIONS */
-#bg {
+.bg {
     position: fixed;
     top: 0;
     left: 0;
