@@ -304,7 +304,7 @@ class ServerPropertiesForm(ServerForm):
     def __init__(self, *args, **kwargs):
         super(ServerPropertiesForm, self).__init__(*args, **kwargs)
         self.version.choices = [
-            (d.version, d.version) for d in MinecraftDownload.query().fetch(100)
+            (d.version, d.version) for d in MinecraftDownload.query_all()
         ]
         self.memory.choices = [
             ('256M', '256 Megabytes'),
@@ -884,7 +884,7 @@ class MinecraftDownloadHandler(AdminHandlerBase):
     @authentication_required(authenticate=authenticate_admin)
     def get(self):
         form = MinecraftDownloadForm()
-        downloads = MinecraftDownload.query().fetch(100)
+        downloads = MinecraftDownload.query_all()
         context = {'form': form, 'downloads': downloads}
         self.render_template('versions.html', context=context)
 
@@ -906,7 +906,7 @@ class MinecraftDownloadHandler(AdminHandlerBase):
                 message = u'Minecraft version "{0}" could not be created (Reason: {1}).'.format(form.version.data, e)
                 logging.error(message)
                 self.session.add_flash(message, level='error')
-        downloads = MinecraftDownload.query().fetch(100)
+        downloads = MinecraftDownload.query_all()
         context = {'form': form, 'downloads': downloads}
         self.render_template('versions.html', context=context)
 

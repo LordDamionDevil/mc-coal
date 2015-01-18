@@ -295,6 +295,10 @@ class MinecraftDownload(ndb.Model):
         key = ndb.Key(cls, version)
         return key.get()
 
+    @classmethod
+    def query_all(cls):
+        return cls.query().order(-cls.version)
+
 
 @ae_ndb_serializer
 class Server(ndb.Model):

@@ -488,7 +488,7 @@ class ServerPropertiesForm(form.Form):
         super(ServerPropertiesForm, self).__init__(*args, **kwargs)
         self.server = server
         self.version.choices = [
-            (d.version, d.version) for d in MinecraftDownload.query().fetch(100)
+            (d.version, d.version) for d in MinecraftDownload.query_all()
         ]
 
 
