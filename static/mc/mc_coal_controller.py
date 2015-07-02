@@ -429,7 +429,7 @@ def load_zip(server_key):
 def unzip_server_dir(server_key, server_dir):
     archive = get_archive_file_path(server_key)
     if os.path.exists(archive):
-        with zipfile.ZipFile(archive) as zf:
+        with zipfile.ZipFile(archive, allowZip64=True) as zf:
             for member in zf.infolist():
                 zf.extract(member, server_dir)
         os.remove(archive)
@@ -561,7 +561,7 @@ def zip_server_dir(server_dir, archive_file):
         RUN_SERVER_FILENAME
     ]
     abs_src = os.path.abspath(server_dir)
-    with zipfile.ZipFile(archive_file, "w") as zf:
+    with zipfile.ZipFile(archive_file, mode="w", allowZip64=True) as zf:
         for dirname, subdirs, files in os.walk(server_dir):
             if dirname not in skip_dirs:
                 arcname = os.path.relpath(dirname, abs_src)
