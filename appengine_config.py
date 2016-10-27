@@ -1,10 +1,10 @@
 # main config
 
-main_SECRET_KEY = 'a_secret_string'
+main_SECRET_KEY = '9AoAD0cieCM5k4RL1ggK'
 
-main_TITLE = 'My COAL Installation'
+main_TITLE = 'McHosting'
 
-main_DESCRIPTION = 'This is my COAL installation. There are many like it, but this one is mine.'
+main_DESCRIPTION = 'McHosting is a free powerful minecraft hosting!'
 
 
 # gce config
