@@ -4,5 +4,5 @@ queue:
 
 - name: controller
   mode: pull
-  # acl:
-  # - user_email: bar@foo.com      # The Compute Engine service account email
+  acl:
+   - user_email: 158590491543-compute@developer.gserviceaccount.com
